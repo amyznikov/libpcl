@@ -379,21 +379,30 @@ static void co_runner(void)
 	co_exit();
 }
 
+int co_get_min_stack_size(void)
+{
+  return CO_MIN_SIZE + CO_STK_COROSIZE;
+}
+
 coroutine_t co_create(void (*func)(void *), void *data, void *stack, int size)
 {
 	int alloc = 0;
 	coroutine *co;
 
-  if ( (size &= ~(sizeof(long) - 1)) < CO_MIN_SIZE + CO_STK_COROSIZE ) {
+  if ( stack != NULL ) {
+    if ( (size &= ~(sizeof(long) - 1)) < CO_MIN_SIZE + CO_STK_COROSIZE ) {
+      errno = EINVAL;
+      return NULL;
+    }
+  }
+  else if ( (size &= ~(sizeof(long) - 1)) < CO_MIN_SIZE ) {
     errno = EINVAL;
     return NULL;
   }
-
-  if ( stack == NULL ) {
-    size = (size + sizeof(coroutine) + CO_STK_ALIGN - 1) & ~(CO_STK_ALIGN - 1);
-    if ( !(stack = malloc(size)) ) {
-      return NULL;
-    }
+  else if ( !(stack = malloc(size = size + CO_STK_COROSIZE)) ) {
+    return NULL;
+  }
+  else {
     alloc = size;
   }
 
