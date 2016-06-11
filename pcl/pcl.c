@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "pcl_config.h"
 #include "pcl.h"
 #include "pcl_private.h"
@@ -380,28 +381,34 @@ static void co_runner(void)
 
 coroutine_t co_create(void (*func)(void *), void *data, void *stack, int size)
 {
-	int alloc = 0, r = CO_STK_COROSIZE;
+	int alloc = 0;
 	coroutine *co;
 
-	if ((size &= ~(sizeof(long) - 1)) < CO_MIN_SIZE)
-		return NULL;
-	if (stack == NULL) {
-		size = (size + sizeof(coroutine) + CO_STK_ALIGN - 1) & ~(CO_STK_ALIGN - 1);
-		stack = malloc(size);
-		if (stack == NULL)
-			return NULL;
-		alloc = size;
-	}
+  if ( (size &= ~(sizeof(long) - 1)) < CO_MIN_SIZE + CO_STK_COROSIZE ) {
+    errno = EINVAL;
+    return NULL;
+  }
+
+  if ( stack == NULL ) {
+    size = (size + sizeof(coroutine) + CO_STK_ALIGN - 1) & ~(CO_STK_ALIGN - 1);
+    if ( !(stack = malloc(size)) ) {
+      return NULL;
+    }
+    alloc = size;
+  }
+
 	co = stack;
 	stack = (char *) stack + CO_STK_COROSIZE;
 	co->alloc = alloc;
 	co->func = func;
 	co->data = data;
-	if (co_set_context(&co->ctx, co_runner, stack, size - CO_STK_COROSIZE) < 0) {
-		if (alloc)
-			free(co);
-		return NULL;
-	}
+
+  if ( co_set_context(&co->ctx, co_runner, stack, size - CO_STK_COROSIZE) < 0 ) {
+    if ( alloc ) {
+      free(co);
+    }
+    return NULL;
+  }
 
 	return (coroutine_t) co;
 }

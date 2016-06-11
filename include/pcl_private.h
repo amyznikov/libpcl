@@ -63,7 +63,7 @@ typedef struct s_cothread_ctx {
 	coroutine *co_curr;
 	coroutine *co_dhelper;
 	coroutine *dchelper;
-	char stk[CO_MIN_SIZE];
+	char stk[CO_MIN_SIZE + CO_STK_COROSIZE];
 } cothread_ctx;
 
 cothread_ctx *co_get_thread_ctx(void);
