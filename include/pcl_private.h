@@ -56,6 +56,7 @@ typedef struct s_coroutine {
 	struct s_coroutine *restarget;
 	void (*func)(void *);
 	void *data;
+	void *sheduler_data;
 } coroutine;
 
 typedef struct s_cothread_ctx {

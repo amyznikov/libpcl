@@ -528,3 +528,16 @@ void *co_set_data(coroutine_t coro, void *data)
 	return odata;
 }
 
+void * co_get_scheduler_data(coroutine_t coro)
+{
+  return ((coroutine *) coro)->sheduler_data;
+}
+
+void * co_set_scheduler_data(coroutine_t coro, void *data)
+{
+  coroutine * co = (coroutine *) coro;
+  void * odata = co->sheduler_data;
+  co->sheduler_data = data;
+  return odata;
+}
+
