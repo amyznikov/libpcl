@@ -20,6 +20,7 @@
  *
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -49,6 +50,26 @@ static co_ctx_t ctx_caller;
 
 #endif /* #if defined(CO_USE_SIGCONTEXT) */
 
+
+static void * (*pcl_alloc_mem)(size_t size) = NULL;
+static void (*pcl_free_mem)(void * address, size_t size) = NULL;
+
+void * pcl_alloc(size_t size)
+{
+  return pcl_alloc_mem ? pcl_alloc_mem(size): malloc(size);
+}
+
+void pcl_free(void * address, size_t size)
+{
+  return pcl_free_mem ? pcl_free_mem(address, size) : free(address);
+}
+
+
+void co_set_mem_allocator(void * (*alloc)(size_t), void (*free)(void *, size_t) )
+{
+  pcl_alloc_mem = alloc;
+  pcl_free_mem = free;
+}
 
 static int co_ctx_sdir(unsigned long psp)
 {
@@ -399,7 +420,7 @@ coroutine_t co_create(void (*func)(void *), void *data, void *stack, int size)
     errno = EINVAL;
     return NULL;
   }
-  else if ( !(stack = malloc(size = size + CO_STK_COROSIZE)) ) {
+  else if ( !(stack = pcl_alloc(size = size + CO_STK_COROSIZE)) ) {
     return NULL;
   }
   else {
@@ -411,10 +432,11 @@ coroutine_t co_create(void (*func)(void *), void *data, void *stack, int size)
 	co->alloc = alloc;
 	co->func = func;
 	co->data = data;
+	co->sheduler_data = NULL;
 
   if ( co_set_context(&co->ctx, co_runner, stack, size - CO_STK_COROSIZE) < 0 ) {
     if ( alloc ) {
-      free(co);
+      pcl_free(co, alloc);
     }
     return NULL;
   }
@@ -432,8 +454,9 @@ void co_delete(coroutine_t coro)
 			tctx->co_curr);
 		exit(1);
 	}
-	if (co->alloc)
-		free(co);
+  if ( co->alloc ) {
+    pcl_free(co, co->alloc);
+  }
 }
 
 void co_call(coroutine_t coro)
@@ -444,7 +467,7 @@ void co_call(coroutine_t coro)
 	co->caller = tctx->co_curr;
 	tctx->co_curr = co;
 
-	co_switch_context(&oldco->ctx, &co->ctx);
+  co_switch_context(&oldco->ctx, &co->ctx);
 }
 
 void co_resume(void)

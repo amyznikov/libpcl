@@ -41,9 +41,9 @@ typedef jmp_buf co_core_ctx_t;
 /*
  * The following value must be power of two (N^2).
  */
-#define CO_STK_ALIGN 256
-#define CO_STK_COROSIZE ((sizeof(coroutine) + CO_STK_ALIGN - 1) & ~(CO_STK_ALIGN - 1))
-#define CO_MIN_SIZE (4 * 1024)
+#define CO_STK_ALIGN      256
+#define CO_STK_COROSIZE   ((sizeof(coroutine) + CO_STK_ALIGN - 1) & ~(CO_STK_ALIGN - 1))
+#define CO_MIN_SIZE       SIGSTKSZ
 
 typedef struct s_co_ctx {
 	co_core_ctx_t cc;

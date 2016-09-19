@@ -47,6 +47,7 @@ PCLXC void *co_set_data(coroutine_t coro, void *data);
 PCLXC void *co_get_scheduler_data(coroutine_t coro);
 PCLXC void *co_set_scheduler_data(coroutine_t coro, void *data);
 PCLXC int co_get_min_stack_size(void);
+PCLXC void co_set_mem_allocator(void * (*alloc)(size_t), void (*free)(void *, size_t) );
 
 #endif
 
