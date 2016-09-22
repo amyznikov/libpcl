@@ -1,0 +1,37 @@
+#! /bin/bash
+
+platform=android-14
+
+
+
+
+
+ndk_build=$(command -v ndk-build)
+if [[ "${ndk_build}" == "" ]] ; then
+	echo "Can not locate ndk-build. Is NDK installed correctly?" 2>&1 ;
+	exit 1; 
+fi
+
+ndk_root=$(dirname "${ndk_build}")
+if [[ "${ndk_root}" == "" ]] ; then
+	echo "Unexpected error: 'dirname "${ndk_build}"' fails. Is NDK installed correctly?" 2>&1 ;
+	exit 1; 
+fi
+
+
+CC=$(ndk-which gcc)
+HOST=arm-linux-gnueabihf
+SYSROOT="${ndk_root}/platforms/${platform}/arch-arm"
+CURDIR=$(pwd)
+
+
+CC="${CC}" && \
+	./configure \
+		--host="${HOST}" \
+		--prefix=/usr \
+		--with-pic \
+		--enable-static=yes \
+		--enable-shared=no \
+		--with-sysroot="${SYSROOT}" && \
+			make all && \
+			make install DESTDIR="${CURDIR}/special-is"
