@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include "pcl_config.h"
 #include "pcl.h"
 
